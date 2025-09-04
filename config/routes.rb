@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   get "timers/show"
-  devise_for :users
+  devise_for :users, controllers: {
+    registrations: "registrations",
+    passwords: "passwords",
+    omniauth_callbacks: "users/omniauth_callbacks"
+  }
   resources :game_records, only: [ :index, :new, :create, :show, :edit, :update, :destroy ]
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -18,7 +22,10 @@ Rails.application.routes.draw do
 
   get "/menus", to: "menus#index"
   get "/timers", to: "timers#show"
-  get "/game_records", to: "game_records#index"
-  get "/rulegpts", to: "rulegpts#index"
   get "/settings", to: "settings#index"
+  get "/game_records", to: "game_records#index"
+  get "/chats", to: "chats#index"
+  post "/chats", to: "chats#create"
+
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
 end

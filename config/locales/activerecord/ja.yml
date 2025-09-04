@@ -5,10 +5,12 @@ ja:
       game_record: 試合記録
     attributes:
       user:
+        login: ユーザー名orメールアドレス
         email: メールアドレス
         username: ユーザー名
         password: パスワード
-        password_confirmation: パスワード確認
+        password_confirmation: 確認用パスワード
+        reset_password_token: パスワード変更
       game_record:
         date: 日付
         home_team_name: ホームチーム

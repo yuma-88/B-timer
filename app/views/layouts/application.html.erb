@@ -2,7 +2,9 @@
 <html lang="ja">
   <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- 既存の viewport メタタグはこのままで問題ありません -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
     <title><%= content_for(:title) || "Myapp" %></title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -13,14 +15,15 @@
     <%= stylesheet_link_tag "application", media: "all", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "application", "data-turbo-track": "reload", type: "module" %>
     
+    <!-- CSS追加: touch-action を設定 -->
+    <style>
+      html, body {
+        touch-action: manipulation;
+      }
+    </style>
   </head>
 
   <body>
-    <% flash.each do |key, value| %>
-      <div class="alert alert-<%= key == 'notice' ? 'success' : 'danger' %>">
-        <%= value %>
-      </div>
-    <% end %>
     <%= yield %>
   </body>
 </html>

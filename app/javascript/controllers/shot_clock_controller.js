@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
-  static targets = ["time"];
+  static targets = ["time1", "time2"]; // 複数のターゲットを追加
   static values = {
     running: Boolean,
     seconds: Number
@@ -9,13 +9,22 @@ export default class extends Controller {
 
   connect() {
     this.runningValue = false;
-    this.secondsValue = 24; // 初期値を24秒に設定
+    this.secondsValue = 24.0; // 初期値を24.0秒に設定
+    this.originalSeconds = null;
+    this.autoResetTo24 = false;
     this.timer = null;
     this.updateDisplay();
   }
 
+  disconnect() {
+    this.stop();
+  }
+
   updateDisplay() {
-    this.timeTarget.textContent = this.secondsValue; // 画面に秒数を表示
+    // secondsValueが0未満にならないようにする
+    const displayValue = Math.max(0, Math.floor(this.secondsValue)); // 0未満にならないように
+    this.time1Target.textContent = displayValue; // time1に表示
+    this.time2Target.textContent = displayValue; // time2に表示
   }
 
   toggleShotClock() {
@@ -32,69 +41,87 @@ export default class extends Controller {
     this.runningValue = true;
     this.timer = setInterval(() => {
       if (this.secondsValue > 0) {
-        this.secondsValue--;
+        this.secondsValue -= 0.1;
         this.updateDisplay();
       } else {
         this.stop();
         this.playEndSound();
+      
+        if (this.autoResetTo24) {
+          this.secondsValue = 24.0;         // ← 自動で24秒に戻す
+          this.updateDisplay();
+          this.autoResetTo24 = false;       // ← フラグをリセット
+        }
+      
+        if (this.originalSeconds !== null) {
+          this.secondsValue = this.originalSeconds;
+          this.originalSeconds = null;
+          this.updateDisplay();
+        }
+        
+        const gameTimerController = this.application.controllers.find(controller => controller.identifier === 'game_timer');
+        if (gameTimerController) {
+          gameTimerController.stop();
+        }
       }
-    }, 1000);
+    }, 100); // 100msごとにカウントダウン（0.1秒ごと）
   }
 
   stop() {
     this.runningValue = false;
-    clearInterval(this.timer);
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
   }
 
   reset() {
     this.stop();
-    this.secondsValue = 24; // 初期状態に戻す（24秒）
+    this.secondsValue = 24.0; // 初期状態に戻す（24.0秒）
     this.updateDisplay();
   }
 
   setTwentyFour() {
-    // ストップ状態の場合は、24秒に設定して停止
-    if (!this.runningValue) {
-      this.secondsValue = 24; // 24秒に設定
-      this.updateDisplay(); // 画面に表示
-    } else {
-      // 動作中の場合は、24秒に設定してすぐに再開
-      this.secondsValue = 24; // 24秒に設定
-      this.updateDisplay(); // 画面に表示
-      this.start(); // 再開
-    }
+    this.autoResetTo24 = true; // ← 追加
+    this.originalSeconds = null;
+    this.secondsValue = 24.0;
+    this.updateDisplay();
+    if (this.runningValue) this.start();
     this.playSwichSound();
   }
-
+  
   setFourteen() {
-    if (!this.runningValue) {
-      this.secondsValue = 14;
-      this.updateDisplay();
-    } else {
-      this.secondsValue = 14;
-      this.updateDisplay();
-      this.start();
-    }
+    this.autoResetTo24 = true; // ← 追加
+    this.originalSeconds = null;
+    this.secondsValue = 14.0;
+    this.updateDisplay();
+    if (this.runningValue) this.start();
     this.playSwichSound();
   }
 
   setTimeout() {
     this.stop();
-    this.secondsValue = 60; // 60秒に変更
+  
+    // すでに originalSeconds がセットされているなら上書きしない
+    if (this.originalSeconds === null) {
+      this.originalSeconds = this.secondsValue;
+    }
+  
+    this.secondsValue = 60.0; // タイムアウトの秒数
     this.updateDisplay();
     this.start();
     this.playSwichSound();
   }
 
   increase() {
-    this.secondsValue++;
+    this.secondsValue += 1; // 1秒増加
     this.updateDisplay();
     this.playSwichSound();
   }
 
   decrease() {
     if (this.secondsValue > 0) {
-      this.secondsValue--;
+      this.secondsValue -= 1; // 1秒減少
       this.updateDisplay();
       this.playSwichSound();
     }

@@ -39,6 +39,12 @@ gem "devise"
 gem "devise-i18n-views"
 gem "rails-i18n", "~> 8.0.1"
 
+gem "omniauth"
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
+
+gem "httparty"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -53,6 +59,7 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+  gem "letter_opener_web"
 end
 
 group :test do

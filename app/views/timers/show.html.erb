@@ -1,61 +1,94 @@
 <% content_for :title, "タイマー" %>
-<div data-controller="game_timer score shot_clock sidemenu audio"
-     class="w-full h-screen bg-black text-white flex flex-col items-center justify-center px-4 sm:px-8 md:px-16 lg:px-20 mx-auto relative">
+<div data-controller="game-timer score shot-clock sidemenu audio modal touch-protection"
+     class="fixed w-full min-h-[100svh] top-0 left-0 right-0 bottom-0 bg-black text-white flex flex-col items-center justify-center px-4 sm:px-8 md:px-16 lg:px-20 mx-auto pb-14 sm:pb-0 select-none"
+     style="user-select: none; -webkit-user-select: none; -ms-user-select: none;">
 
   <!-- 左サイドバー -->
-  <div class="absolute left-0 top-0 h-full w-10 bg-gray-900 flex flex-col z-10">
+  <div class="fixed left-0 top-0 h-full w-10 bg-zinc-900 hidden sm:flex flex-col z-10 border-r border-zinc-700">
     <!-- 上半分 -->
     <div class="flex-grow flex items-center justify-center">
-      <button class="text-white text-2xl w-full h-full" data-action="click->sidemenu#toggle"><i class="fas fa-bars"></i></button>
+      <button class="text-white text-2xl w-full h-full" data-action="click->sidemenu#toggle" title="メニュー"><i class="fas fa-bars"></i></button>
     </div>
 
     <!-- 真ん中に白い横線 -->
-    <div class="border-t border-white w-full"></div>
+    <div class="border-t border-zinc-600 w-full"></div>
 
     <!-- 下半分 -->
     <div class="flex-grow flex items-center justify-center">
-      <button class="text-white text-2xl w-full h-full" data-action="click->game_timer#resetAll"><i class="fas fa-redo"></i></button>
+      <button class="text-white text-2xl w-full h-full" data-action="click->game-timer#resetAll" title="ゲームリセット"><i class="fas fa-redo"></i></button>
     </div>
   </div>
 
   <!-- サイドメニュー -->
-  <div data-sidemenu-target="menu" class="fixed left-0 top-0 h-full w-48 bg-gray-500 text-white py-4 px-6 transform -translate-x-full hidden transition-transform duration-300 ease-in-out z-20">
-    <ul class="flex flex-col gap-4 text-lg">
-      <button data-action="click->sidemenu#toggle">閉じる</button>
-      <button data-action="click->game_timer#resetTime">タイマーリセット</button>
-      <button data-action="click->score#resetScores">スコアリセット</button>
-      <button onclick="window.location='<%= settings_path %>'">設定</button>
-      <button>出場順番確認</button>
-      <button onclick="window.location='<%= new_user_session_path %>'">試合記録</button>
-      <button>確認用GPT</button>
-      <button onclick="window.location='<%= menus_path %>'">トップメニュー</button>
+  <div data-sidemenu-target="menu" class="fixed left-0 top-0 h-full w-48 bg-zinc-700 text-white py-4 px-6 transform -translate-x-full opacity-0 pointer-events-none transition-transform duration-300 ease-in-out z-50">
+    <ul class="flex flex-col gap-4 text-lg text-left"> <!-- text-left を追加 -->
+      <li class="hidden mobile-landscape:hidden md:flex"><button data-action="click->modal#open">操作ガイド</button></li>
+      <li><button data-action="click->game-timer#resetTime">タイマーリセット</button></li>
+      <li><button data-action="click->score#resetScores">スコアリセット</button></li>
+      <li><%= link_to settings_path, class: "text-white", data: { action: "click->audio#navigateWithSound" } do %>設定<% end %></li>
+      <li><%= link_to new_user_session_path, class: "text-white", data: { action: "click->audio#navigateWithSound" } do %>試合記録<% end %></li>
+      <li><%= link_to chats_path, class: "text-white", data: { action: "click->audio#navigateWithSound" } do %>コーチAI<% end %></li>
+      <li><%= link_to menus_path, class: "text-white", data: { action: "click->audio#navigateWithSound" } do %>メニュー<% end %></li>
+      <li><button data-action="click->sidemenu#toggle">閉じる</button></li>
     </ul>
   </div>
 
+  <!-- オーバーレイ -->
+  <div data-sidemenu-target="overlay"
+      class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"
+      data-action="click->sidemenu#close">
+  </div>
+
   <!-- 右サイドバー -->
-  <div class="absolute right-0 top-0 h-full w-10 bg-gray-900 flex flex-col z-10">
+  <div class="fixed right-0 top-0 h-full w-10 bg-zinc-900 hidden sm:flex flex-col z-10 border-l border-zinc-700">
     <!-- 上半分に音声ボタン -->
     <div class="flex-1 flex items-center justify-center">
-      <button class="text-white text-2xl w-full h-full" data-action="mousedown->audio#playBuzzerSound mouseup->audio#stopBuzzerSound"><i class="fas fa-volume-down"></i></button>
+      <button class="text-white text-2xl w-full h-full" data-action="mousedown->audio#playBuzzerSound mouseup->audio#stopBuzzerSound touchstart->audio#playBuzzerSound touchend->audio#stopBuzzerSound" title="ブザー"><i class="fas fa-volume-down"></i></button>
     </div>
 
     <!-- 真ん中に白い横線 -->
-    <div class="border-t border-white w-full"></div>
+    <div class="border-t border-zinc-600 w-full"></div>
 
     <!-- 下半分にスコア交換ボタン -->
     <div class="flex-1 flex items-center justify-center">
-      <button class="text-white text-2xl w-full h-full" data-action="click->score#swapScores"><i class="fas fa-exchange-alt"></i></button>
+      <button class="text-white text-2xl w-full h-full" data-action="click->score#swapScores" title="コートチェンジ"><i class="fas fa-exchange-alt"></i></button>
     </div>
   </div>
 
+  <!-- スマホ表示：selectを上に、その下にボタンを横並び -->
+  <div class="w-full sm:hidden flex flex-col items-center gap-2">
+    <!-- セレクトボックス -->
+    <select data-game-timer-target="select" class="w-full bg-black text-yellow-400 text-2xl text-center p-2 rounded">
+      <option>P1</option>
+      <option>P2</option>
+      <option>ハーフ</option>
+      <option>P3</option>
+      <option>P4</option>
+      <option>インターバル</option>
+    </select>
+
+    <style>
+      select.text-center {
+        text-align-last: center;
+      }
+    </style>
+
+    <!-- ボタン（横並び） -->
+    <div class="flex justify-center gap-6 w-full">
+      <button data-action="click->game-timer#increaseMinute" class="text-zinc-700 text-4xl p-2">▲</button>
+      <button data-action="click->game-timer#decreaseMinute" class="text-zinc-700 text-4xl p-2 mr-8">▼</button>
+      <button data-action="click->game-timer#increaseSecond" class="text-zinc-700 text-4xl p-2">▲</button>
+      <button data-action="click->game-timer#decreaseSecond" class="text-zinc-700 text-4xl p-2">▼</button>
+    </div>
+  </div>
 
   <!-- 試合時間と増減ボタン -->
-  <div class="flex flex-col items-center gap-2 w-full max-w-full">
+  <div class="flex flex-col items-center gap-0 w-full max-w-full">
     <!-- 増減ボタン -->
-    <div class="flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 w-full relative z-10">
-      <button data-action="click->game_timer#increaseMinute" class="text-gray-700 text-4xl p-2">▲</button>
-      <button data-action="click->game_timer#decreaseMinute" class="text-gray-700 text-4xl p-2">▼</button>
-      <select data-game_timer-target="select" class="bg-black text-yellow-400 text-3xl sm:text-4xl text-center p-1 rounded">
+    <div class="hidden sm:flex flex-wrap justify-center gap-4 sm:gap-6 md:gap-8 w-full relative">
+      <button data-action="click->game-timer#increaseMinute" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▲</button>
+      <button data-action="click->game-timer#decreaseMinute" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▼</button>
+      <select data-game-timer-target="select" class="bg-black text-yellow-400 text-2xl mobile-landscape:text-2xl sm:text-3xl md:text-4xl text-center p-2 sm:p-3 md:p-4 rounded" title="ピリオド">
         <option>P1</option>
         <option>P2</option>
         <option>ハーフ</option>
@@ -63,55 +96,176 @@
         <option>P4</option>
         <option>インターバル</option>
       </select>
-      <button data-action="click->game_timer#increaseSecond" class="text-gray-700 text-4xl p-2">▲</button>
-      <button data-action="click->game_timer#decreaseSecond" class="text-gray-700 text-4xl p-2">▼</button>
+      <button data-action="click->game-timer#increaseSecond" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▲</button>
+      <button data-action="click->game-timer#decreaseSecond" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▼</button>
     </div>
 
     <!-- 試合時間（クリックでスタート・ストップ） -->
     <div class="text-white font-bold text-center font-mono tracking-wider cursor-pointer 
-            text-[clamp(3rem,25vw,30rem)] leading-none"
-         data-game_timer-target="time"
-         data-action="click->game_timer#toggleTimer">
+            text-[clamp(3rem,25vw,30rem)] mobile-landscape:text-[10rem] leading-none mobile-landscape:-my-4"
+         data-game-timer-target="time"
+         data-action="click->game-timer#toggleTimer">
       10:00
     </div>
   </div>
 
-  <!-- チームスコア -->
-  <div class="flex justify-between items-center w-full max-w-5xl mt-6 px-4">
-    <div class="flex flex-col items-center">
-      <div class="flex gap-3 sm:gap-4">
-        <button data-action="click->score#increaseTeamAScore" class="text-gray-700 text-4xl p-2">▲</button>
-        <button data-action="click->score#decreaseTeamAScore" class="text-gray-700 text-4xl p-2">▼</button>
+  <!-- スコア & ショットクロック（スマホは縦、PCは横） -->
+  <div class="w-full mt-6 px-4 max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-2xl xl:max-w-5xl mobile-landscape:max-w-xl">
+    <!-- スマホ表示: スコア横並び、ショットクロック下 -->
+    <div class="flex flex-col sm:hidden gap-4">
+      <!-- スコア左右 -->
+      <div class="flex justify-between w-full gap-4">
+        <!-- Team A -->
+        <div class="flex flex-col items-center w-1/2">
+          <div class="flex gap-4">
+            <button data-action="click->score#increaseTeamAScore" class="text-zinc-700 text-4xl p-1 z-10">▲</button>
+            <button data-action="click->score#decreaseTeamAScore" class="text-zinc-700 text-4xl p-1 z-10">▼</button>
+          </div>
+          <div class="text-yellow-400 text-center font-mono text-[clamp(3.5rem,20vw,7rem)] font-bold cursor-pointer leading-none"
+              data-score-target="teamAScore" data-action="click->score#increaseTeamAScore"
+              style="direction: rtl; text-align: left;">0</div>
+        </div>
+
+        <!-- Team B -->
+        <div class="flex flex-col items-center w-1/2">
+          <div class="flex gap-4">
+            <button data-action="click->score#increaseTeamBScore" class="text-zinc-700 text-4xl p-1 z-10">▲</button>
+            <button data-action="click->score#decreaseTeamBScore" class="text-zinc-700 text-4xl p-1 z-10">▼</button>
+          </div>
+          <div class="text-yellow-400 text-center font-mono text-[clamp(3.5rem,20vw,9rem)] font-bold cursor-pointer leading-none"
+              data-score-target="teamBScore" data-action="click->score#increaseTeamBScore"
+              style="direction: ltr; text-align: right;">0</div>
+        </div>
       </div>
-      <div class="text-yellow-400 text-center font-mono w-[120px] sm:w-[150px] md:w-[180px] lg:w-[200px] text-[clamp(3rem,20vw,20rem)] font-bold cursor-pointer leading-none" 
-            data-score-target="teamAScore" data-action="click->score#increaseTeamAScore" style="direction: rtl; text-align: left;">0</div>
+
+      <!-- ショットクロック -->
+      <div class="flex flex-col items-center w-full">
+        <div class="flex gap-6">
+          <button data-action="click->shot-clock#increase" class="text-zinc-700 text-4xl p-2 z-10">▲</button>
+          <button data-action="click->shot-clock#decrease" class="text-zinc-700 text-4xl p-2 z-10">▼</button>
+        </div>
+        <div class="text-red-500 text-[clamp(3rem,30vw,7rem)] cursor-pointer leading-none"
+            data-shot-clock-target="time1"
+            data-action="click->shot-clock#toggleShotClock">
+          24
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button data-action="click->shot-clock#setTwentyFour" class="px-4 py-1 bg-zinc-700 text-white rounded-md text-sm">２４</button>
+          <button data-action="click->shot-clock#setFourteen" class="px-4 py-1 bg-zinc-700 text-white rounded-md text-sm">１４</button>
+          <button data-action="click->shot-clock#setTimeout" class="px-4 py-1 bg-red-800 text-white rounded-md text-sm">ＴＯ</button>
+        </div>
+      </div>
     </div>
 
-    <!-- ショットクロック -->
-    <div class="flex flex-col items-center mt-4">
-      <div class="flex gap-3 sm:gap-4">
-        <button data-action="click->shot_clock#increase" class="text-gray-700 text-4xl p-2">▲</button>
-        <button data-action="click->shot_clock#decrease" class="text-gray-700 text-4xl p-2">▼</button>
+    <!-- PC表示: 横並び -->
+    <div class="hidden sm:flex justify-between items-center w-full">
+      <!-- Team A -->
+      <div class="flex flex-col items-center">
+        <div class="flex gap-4 sm:gap-8 mobile-landscape:-my-4">
+          <button data-action="click->score#increaseTeamAScore" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2 z-10">▲</button>
+          <button data-action="click->score#decreaseTeamAScore" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2 mobile-landscape:-mr-3 z-10">▼</button>
+        </div>
+        <div class="text-yellow-400 text-center font-mono w-[100px] mobile-landscape:w-[150px] sm:w-[100px] md:w-[150px] lg:w-[230px] text-[clamp(3rem,20vw,20rem)] mobile-landscape:text-[8rem] font-bold cursor-pointer leading-none"
+            data-score-target="teamAScore" data-action="click->score#increaseTeamAScore"
+            style="direction: rtl; text-align: right;">0</div>
       </div>
-      <div class="text-white text-[clamp(2rem,8vw,10rem)] cursor-pointer leading-none"
-         data-shot_clock-target="time"
-         data-action="click->shot_clock#toggleShotClock">
-        24
+
+      <!-- Shot Clock -->
+      <div class="flex flex-col items-center mx-auto mt-4">
+        <div class="flex gap-4 sm:gap-8 mobile-landscape:-mt-12 mobile-landscape:-mb-4">
+          <button data-action="click->shot-clock#increase" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▲</button>
+          <button data-action="click->shot-clock#decrease" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2">▼</button>
+        </div>
+        <div class="text-red-500 text-[clamp(3rem,10vw,20rem)] cursor-pointer leading-none mt-2"
+            data-shot-clock-target="time2"
+            data-action="click->shot-clock#toggleShotClock">
+          24
+        </div>
+        <div class="flex gap-2 md:gap-4 mt-1">
+          <button data-action="click->shot-clock#setTwentyFour" class="px-3 py-1 lg:px-4 md:py-3 bg-zinc-800 text-white rounded-md text-sm md:text-base">２４</button>
+          <button data-action="click->shot-clock#setFourteen" class="px-3 py-1 lg:px-4 bg-zinc-800 text-white rounded-md text-sm md:text-base">１４</button>
+          <button data-action="click->shot-clock#setTimeout" class="px-3 py-1 lg:px-4 bg-red-800 text-white rounded-md text-sm md:text-base">ＴＯ</button>
+        </div>
       </div>
-      <div class="flex gap-2 sm:gap-4 mt-2">
-        <button data-action="click->shot_clock#setTwentyFour" class="px-3 py-1 bg-gray-700 text-white rounded-md text-sm">24秒</button>
-        <button data-action="click->shot_clock#setFourteen" class="px-3 py-1 bg-gray-700 text-white rounded-md text-sm">14秒</button>
-        <button data-action="click->shot_clock#setTimeout" class="px-3 py-1 bg-red-800 text-white rounded-md text-sm">TO</button>
+
+      <!-- Team B -->
+      <div class="flex flex-col items-center">
+        <div class="flex gap-4 sm:gap-8 mobile-landscape:-my-4">
+          <button data-action="click->score#increaseTeamBScore" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2 mobile-landscape:-ml-3 z-10">▲</button>
+          <button data-action="click->score#decreaseTeamBScore" class="text-zinc-700 text-4xl mobile-landscape:text-2xl p-2 z-10">▼</button>
+        </div>
+        <div class="text-yellow-400 text-center font-mono w-[80px] mobile-landscape:w-[150px] sm:w-[100px] md:w-[150px] lg:w-[230px] text-[clamp(3rem,20vw,20rem)] mobile-landscape:text-[8rem] font-bold cursor-pointer leading-none"
+            data-score-target="teamBScore" data-action="click->score#increaseTeamBScore"$
+            style="direction: ltr; text-align: left;">0</div>
       </div>
     </div>
+  </div>
 
-    <div class="flex flex-col items-center">
-      <div class="flex gap-3 sm:gap-4">
-        <button data-action="click->score#increaseTeamBScore" class="text-gray-700 text-4xl p-2">▲</button>
-        <button data-action="click->score#decreaseTeamBScore" class="text-gray-700 text-4xl p-2">▼</button>
-      </div>
-      <div class="text-yellow-400 text-center font-mono w-[120px] sm:w-[150px] md:w-[180px] lg:w-[200px] text-[clamp(3rem,20vw,20rem)] font-bold cursor-pointer leading-none" 
-            data-score-target="teamBScore" data-action="click->score#increaseTeamBScore" style="direction: ltr; text-align: right;">0</div>
+  <!-- スマホ専用：下部操作メニュー -->
+  <div class="fixed bottom-0 left-0 w-full h-14 bg-zinc-900 border-t border-zinc-700 flex justify-around items-center sm:hidden z-50">
+    <!-- メニュー開閉（左サイドバーのメニュー） -->
+    <button class="text-white text-xl" data-action="click->sidemenu#toggle">
+      <i class="fas fa-bars"></i>
+    </button>
+    <!-- 全リセット（左サイドバーのリセット） -->
+    <button class="text-white text-xl" data-action="click->game-timer#resetAll">
+      <i class="fas fa-redo"></i>
+    </button>
+    <!-- ブザー（右サイドバーのブザー） -->
+    <button class="text-white text-xl" data-action="mousedown->audio#playBuzzerSound mouseup->audio#stopBuzzerSound touchstart->audio#playBuzzerSound touchend->audio#stopBuzzerSound">
+      <i class="fas fa-volume-down"></i>
+    </button>
+    <!-- スコア交換（右サイドバーのスワップ） -->
+    <button class="text-white text-xl" data-action="click->score#swapScores">
+      <i class="fas fa-exchange-alt"></i>
+    </button>
+  </div>
+
+  <!-- モーダルオーバーレイ -->
+  <div data-modal-target="overlay" 
+      class="hidden fixed inset-0 bg-black bg-opacity-70 z-50 items-center justify-center px-4
+            transition-opacity duration-300 ease-out opacity-0"
+      data-action="click->modal#close">
+    <div class="bg-zinc-700 border border-orange-500 text-white p-6 rounded-lg w-full max-w-md shadow-lg relative
+                transform scale-95 opacity-0 transition-all duration-300 ease-out"
+        data-modal-target="modalBox">
+      <button class="absolute top-2 right-3 text-white hover:text-gray-400 text-2xl" data-action="click->modal#close">&times;</button>
+      <h2 class="text-2xl font-bold mb-4">操作ガイド</h2>
+      <ul class="space-y-2 text-lg">
+        <li class="flex">
+          <span class="w-44">「Enter」・・・・・</span><span>タイマー開始・停止</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「T」・・・・・・・</span><span>タイマーリセット</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「S」・・・・・・・</span><span>スコアリセット</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「R」・・・・・・・</span><span>ゲームリセット</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「C」・・・・・・・</span><span>コートチェンジ</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「M」・・・・・・・</span><span>メニュー表示</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「space」・・・・・</span><span>ブザー</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「矢印キー」・・・・</span><span>スコア選択・増減</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「1」～「4」・・・・</span><span>ピリオド</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「5」or「H」・・・・</span><span>ハーフタイム</span>
+        </li>
+        <li class="flex">
+          <span class="w-44">「6」or「I」・・・・</span><span>インターバル</span>
+        </li>
+      </ul>
     </div>
   </div>
 </div>

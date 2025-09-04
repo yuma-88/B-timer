@@ -5,64 +5,103 @@ export default class extends Controller {
     "mainTime", "breakTime", "halfTime",
     "endless", "showMainTimer", "showScore",
     "show24Timer", "sync24Timer", "enableAudio",
-    "countdownVoice", "memberChangeVoice"
+    "countdownVoice", "memberChangeVoice", "teamIdenfication"
   ];
 
   connect() {
+    this.initializeTimeSelectors();
     this.loadSettings();
-    this.updateAudioSettings();  // 初期状態の音声設定を反映
-    document.addEventListener("keydown", this.handleKeydown.bind(this));
+    this.updateAudioSettings();
   }
 
-  disconnect() {
-    document.removeEventListener("keydown", this.handleKeydown.bind(this));
+  initializeTimeSelectors() {
+    const targets = [this.mainTimeTarget, this.breakTimeTarget, this.halfTimeTarget];
+
+    targets.forEach(target => {
+      const minutesSelect = target.querySelector(".minutes-select");
+      const secondsSelect = target.querySelector(".seconds-select");
+
+      if (!minutesSelect || !secondsSelect) return;
+
+      minutesSelect.innerHTML = "";
+      secondsSelect.innerHTML = "";
+
+      for (let i = 0; i <= 30; i++) {
+        const option = document.createElement("option");
+        option.value = i;
+        option.textContent = i.toString().padStart(2, "0");
+        minutesSelect.appendChild(option);
+      }
+
+      for (let i = 0; i < 60; i++) {
+        const option = document.createElement("option");
+        option.value = i.toString().padStart(2, "0");
+        option.textContent = i.toString().padStart(2, "0");
+        secondsSelect.appendChild(option);
+      }
+    });
   }
 
-  // 設定を読み込む
   loadSettings() {
     const savedSettings = JSON.parse(sessionStorage.getItem("gameSettings")) || {};
 
-    this.mainTimeTarget.textContent = savedSettings.mainTime || "10:00";
-    this.breakTimeTarget.textContent = savedSettings.breakTime || "1:00";
-    this.halfTimeTarget.textContent = savedSettings.halfTime || "10:00";
+    const applyTime = (target, key, fallback = "10:00") => {
+      const time = savedSettings[key] || fallback;
+      const [min, sec] = time.split(":");
+
+      const minSelect = target.querySelector(".minutes-select");
+      const secSelect = target.querySelector(".seconds-select");
+
+      if (minSelect && secSelect) {
+        minSelect.value = parseInt(min).toString();
+        secSelect.value = parseInt(sec).toString().padStart(2, "0");
+      }
+    };
+
+    applyTime(this.mainTimeTarget, "mainTime", "10:00");
+    applyTime(this.breakTimeTarget, "breakTime", "1:00");
+    applyTime(this.halfTimeTarget, "halfTime", "15:00");
+
+    // enableAudioは保存値 or 初期true
+    const enableAudio = savedSettings.enableAudio ?? true;
+    this.enableAudioTarget.checked = enableAudio;
+
+    // countdownVoiceはenableAudioがONなら保存値 or true、OFFならfalse
+    this.countdownVoiceTarget.checked = enableAudio
+      ? (savedSettings.countdownVoice ?? true)
+      : false;
+
+    // memberChangeVoiceはenableAudioがONなら保存値 or false、OFFならfalse
+    this.memberChangeVoiceTarget.checked = enableAudio
+      ? (savedSettings.memberChangeVoice ?? false)
+      : false;
+
+    // disabled設定もenableAudioに合わせる
+    this.countdownVoiceTarget.disabled = !enableAudio;
+    this.memberChangeVoiceTarget.disabled = !enableAudio;
+
+    // その他の設定
     this.endlessTarget.checked = savedSettings.endless ?? false;
-
-    this.sync24TimerTarget.checked = savedSettings.sync24Timer || false;
-
-    this.enableAudioTarget.checked = savedSettings.enableAudio ?? true;
-    this.countdownVoiceTarget.checked = savedSettings.countdownVoice ?? true;
-    this.memberChangeVoiceTarget.checked = savedSettings.memberChangeVoice ?? false;
+    this.sync24TimerTarget.checked = savedSettings.sync24Timer ?? false;
+    this.teamIdenficationTarget.checked = savedSettings.teamIdenfication ?? false;
   }
 
-  // 音声設定を更新する
-  updateAudioSettings() {
-    const enableAudio = this.enableAudioTarget.checked;
-  
-    // `enableAudio` がオフの場合、音声関連の設定もオフにし、無効にする
-    if (!enableAudio) {
-      this.countdownVoiceTarget.checked = false;  // カウントダウン音声をオフ
-      this.memberChangeVoiceTarget.checked = false;  // メンバーチェンジ音声をオフ
-      this.countdownVoiceTarget.disabled = true;  // カウントダウン音声のチェックボックスを無効にする
-      this.memberChangeVoiceTarget.disabled = true;  // メンバーチェンジ音声のチェックボックスを無効にする
-  
-      // 設定をsessionStorageに保存（音声設定を無効化）
-      const settings = JSON.parse(sessionStorage.getItem("gameSettings")) || {};
-      settings["enableAudio"] = false;
-      settings["countdownVoice"] = false;
-      settings["memberChangeVoice"] = false;
-      sessionStorage.setItem("gameSettings", JSON.stringify(settings));
-    } else {
-      this.countdownVoiceTarget.disabled = false;  // カウントダウン音声のチェックボックスを有効にする
-      this.memberChangeVoiceTarget.disabled = false;  // メンバーチェンジ音声のチェックボックスを有効にする
-  
-      // `enableAudio` がオンの場合、セッションストレージで音声設定をオンにする
-      const settings = JSON.parse(sessionStorage.getItem("gameSettings")) || {};
-      settings["enableAudio"] = true;
-      sessionStorage.setItem("gameSettings", JSON.stringify(settings));
-    }
+  saveTime(event) {
+    const wrapper = event.target.closest("[data-settings-target]");
+    const key = wrapper.dataset.settingsTargetKey;
+
+    const min = wrapper.querySelector(".minutes-select")?.value || "0";
+    const sec = wrapper.querySelector(".seconds-select")?.value || "00";
+
+    const time = `${parseInt(min)}:${sec.padStart(2, "0")}`;
+
+    const settings = JSON.parse(sessionStorage.getItem("gameSettings")) || {};
+    settings[key] = time;
+    sessionStorage.setItem("gameSettings", JSON.stringify(settings));
+
+    window.dispatchEvent(new Event("settings:updated"));
   }
 
-  // 設定を保存する
   saveSettings(event) {
     const target = event.target;
     const settingName = target.dataset.settingsTarget;
@@ -72,58 +111,52 @@ export default class extends Controller {
     settings[settingName] = settingValue;
     sessionStorage.setItem("gameSettings", JSON.stringify(settings));
 
-    // 設定更新イベントを発火
     window.dispatchEvent(new Event("settings:updated"));
 
-    // 音声設定を更新
     if (settingName === "enableAudio") {
-      this.updateAudioSettings();  // `enableAudio` が変更された場合は音声設定を再評価
+      this.handleEnableAudioChange(settingValue);
     }
   }
 
-  // Bキーが押されたときに画面遷移する処理
-  handleKeydown(event) {
-    if (event.key === "b" || event.key === "B") {
-      const timersPath = document.getElementById('backButton').dataset.timersPath;
-      window.location = timersPath;
+  handleEnableAudioChange(enableAudio) {
+    if (enableAudio && !this.countdownVoiceTarget.checked) {
+      this.countdownVoiceTarget.checked = true; // enableAudioがONならcountdownもONに強制
     }
-  }
-
-  // 時間を編集モードにする
-  editTime(event) {
-    const target = event.target;
-    target.contentEditable = "true";
-    target.focus();
-  }
-
-  // 時間を保存する
-  saveTime(event) {
-    const target = event.target;
-    const newTime = target.innerText.trim();
-
-    // 時間形式チェック (MM:SS)
-    if (!/^\d{1,2}:\d{2}$/.test(newTime)) {
-      alert("正しい時間形式（MM:SS）で入力してください！");
-      this.loadSettings(); // 無効な場合は元に戻す
-      return;
+    if (!enableAudio) {
+      this.countdownVoiceTarget.checked = false;
+      this.memberChangeVoiceTarget.checked = false;
     }
 
-    target.contentEditable = "false"; // 編集モードを終了
+    this.countdownVoiceTarget.disabled = !enableAudio;
+    this.memberChangeVoiceTarget.disabled = !enableAudio;
 
     // 設定を保存
     const settings = JSON.parse(sessionStorage.getItem("gameSettings")) || {};
-    settings[target.dataset.settingsTarget] = newTime;
+    settings.enableAudio = enableAudio;
+    settings.countdownVoice = this.countdownVoiceTarget.checked;
+    settings.memberChangeVoice = this.memberChangeVoiceTarget.checked;
     sessionStorage.setItem("gameSettings", JSON.stringify(settings));
 
-    // 設定更新イベント発火
-    window.dispatchEvent(new Event("settings:updated"));
+    // 設定変更イベントを通知
+    window.dispatchEvent(new CustomEvent("audio:setting-changed", {
+      detail: {
+        enableAudio,
+        countdownVoice: this.countdownVoiceTarget.checked,
+        memberChangeVoice: this.memberChangeVoiceTarget.checked,
+      }
+    }));
   }
 
-  // Enterキーで確定
-  handleEnter(event) {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      event.target.blur(); // フォーカスを外して確定
+  updateAudioSettings() {
+    const enableAudio = this.enableAudioTarget.checked;
+    this.countdownVoiceTarget.disabled = !enableAudio;
+    this.memberChangeVoiceTarget.disabled = !enableAudio;
+  }
+
+  playSwichSound() {
+    const audioController = this.application.controllers.find(controller => controller.identifier === 'audio');
+    if (audioController) {
+      audioController.playSwichSound();
     }
   }
 }
