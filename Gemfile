@@ -37,7 +37,7 @@ gem "bootsnap", require: false
 # gem "image_processing", "~> 1.2"
 gem "devise"
 gem "devise-i18n-views"
-gem "rails-i18n", "~> 8.0.1"
+gem "rails-i18n", "~> 8.0.2"
 
 gem "omniauth"
 gem "omniauth-google-oauth2"
