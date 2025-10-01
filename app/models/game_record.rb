@@ -15,7 +15,21 @@ class GameRecord < ApplicationRecord
   attr_accessor :home_team_name, :away_team_name
 
   # enumでゲームタイプを定義（日本語）
-  enum game_type: { 練習: "練習", 交流: "交流", 大会: "大会", 公式: "公式" }
+  enum game_type: {
+    practice: "練習",
+    friendly: "交流",
+    tournament: "大会",
+    official: "公式"
+  }, _suffix: true
+
+  def game_type_jp
+    {
+      "practice" => "練習",
+      "friendly" => "交流",
+      "tournament" => "大会",
+      "official" => "公式"
+    }[game_type] || game_type
+  end
 
   # 保存前にチームを作成
   before_save :create_teams
