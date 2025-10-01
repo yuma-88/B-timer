@@ -8,26 +8,25 @@ class GeminiChatService
 
   def chat(prompt)
     body = {
-      model: "models/gemini-1.5-flash",  # 確認した無料版のモデルを指定
       contents: [ { parts: [ { text: prompt } ] } ]
     }
 
     Rails.logger.debug "Sending request to Gemini API with body: #{body.to_json}"
 
-    # Gemini APIリクエストを送信
-    response = self.class.post("/models/gemini-1.5-flash:generateContent?key=#{@api_key}",
-                               headers: { "Content-Type" => "application/json" },
-                               body: body.to_json)
+    # 使用するモデル名を「gemini-2.0-flash-lite-001」に変更
+    response = self.class.post(
+      "/models/gemini-2.0-flash-lite-001:generateContent?key=#{@api_key}",
+      headers: { "Content-Type" => "application/json" },
+      body: body.to_json
+    )
 
     Rails.logger.debug "Received response: #{response.body}"
 
     if response.success?
       parsed = JSON.parse(response.body)
-      response_text = parsed.dig("candidates", 0, "content", "parts", 0, "text") || "No response"
+      parsed.dig("candidates", 0, "content", "parts", 0, "text") || "No response"
     else
-      response_text = "Error: Could not get a response from the API."
+      "Error: Could not get a response from the API. Status: #{response.code}, Body: #{response.body}"
     end
-
-    response_text
   end
 end
