@@ -17,6 +17,11 @@ ja:
         away_team_name: アウェイチーム
         score_home_team: ホームチーム得点
         score_away_team: アウェイチーム得点
+        game_type:
+          practice: 練習
+          friendly: 交流
+          tournament: 大会
+          official: 公式
     errors:
       models:
         game_record:

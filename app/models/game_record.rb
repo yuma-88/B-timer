@@ -14,21 +14,17 @@ class GameRecord < ApplicationRecord
   # 仮想的な属性を定義
   attr_accessor :home_team_name, :away_team_name
 
-  # enumでゲームタイプを定義（日本語）
-  enum game_type: {
-    practice: "練習",
-    friendly: "交流",
-    tournament: "大会",
-    official: "公式"
-  }, _suffix: true
+  # enum定義（英語）
+  enum game_type: { practice: 0, friendly: 1, tournament: 2, official: 3 }
 
+  # 日本語変換は別途用意
   def game_type_jp
     {
       "practice" => "練習",
       "friendly" => "交流",
       "tournament" => "大会",
       "official" => "公式"
-    }[game_type] || game_type
+    }[game_type]
   end
 
   # 保存前にチームを作成
