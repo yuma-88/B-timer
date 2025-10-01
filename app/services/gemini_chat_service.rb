@@ -8,7 +8,7 @@ class GeminiChatService
 
   def chat(prompt)
     body = {
-      contents: [{ parts: [{ text: prompt }] }]
+      contents: [ { parts: [ { text: prompt } ] } ]
     }
 
     Rails.logger.debug "Sending request to Gemini API with body: #{body.to_json}"
