@@ -57,8 +57,10 @@ export default class extends Controller {
   handleKeydown(event) {
     switch (event.key) {
       case "ArrowLeft":
+        this.selectTeamA()
+        break
       case "ArrowRight":
-        this.toggleSelectedTeam()
+        this.selectTeamB()
         break
       case "ArrowUp":
         this.increaseScore()
@@ -77,8 +79,13 @@ export default class extends Controller {
     }
   }
 
-  toggleSelectedTeam() {
-    this.selectedTeamValue = this.selectedTeamValue === "A" ? "B" : "A"
+  selectTeamA() {
+  this.selectedTeamValue = "A"
+  this.updateSelection()
+  }
+
+  selectTeamB() {
+    this.selectedTeamValue = "B"
     this.updateSelection()
   }
 
@@ -94,10 +101,10 @@ export default class extends Controller {
     )
 
     this.teamAScoreTargets.forEach(el =>
-      el.classList.toggle("border-red-800", this.selectedTeamValue === "A")
+      el.classList.toggle("border-green-500", this.selectedTeamValue === "A")
     )
     this.teamBScoreTargets.forEach(el =>
-      el.classList.toggle("border-red-800", this.selectedTeamValue === "B")
+      el.classList.toggle("border-green-500", this.selectedTeamValue === "B")
     )
   }
 
