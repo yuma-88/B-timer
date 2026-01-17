@@ -103,9 +103,21 @@ export default class extends Controller {
       return;
     }
 
-    if (event.key === "Enter") this.toggleTimer();
-    if (event.key === "r" || event.key === "R") this.resetAll();
-    if (event.key === "t" || event.key === "T") this.resetTime();
+    if (event.key === "Enter") {
+      event.preventDefault();   // ← これが重要！
+      this.toggleTimer();
+      return;
+    }
+
+    if (event.key === "r" || event.key === "R") {
+      this.resetAll();
+      return;
+    }
+
+    if (event.key === "t" || event.key === "T") {
+      this.resetTime();
+      return;
+    }
 
     const keyToValueMap = {
       "1": "P1", "2": "P2", "3": "P3", "4": "P4",
